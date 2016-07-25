@@ -14,7 +14,7 @@ import config
 ckan = ckanapi.RemoteCKAN(config.CONFIG['ckanurl'], apikey=config.CONFIG['apikey'], user_agent=config.CONFIG.get('user_agent', None))
 """The CKAN API object"""
 
-def process_datasets(datasets, count_maps):
+def process_dataset(dataset, count_maps):
     """Do something with a dataset tagged hxl"""
 
     def increment(count_maps, type, key):
@@ -25,24 +25,22 @@ def process_datasets(datasets, count_maps):
         else:
             count_maps[type][key] = 1
             
-    for dataset in datasets:
-        print("Dataset: {}".format(dataset['name']), file=sys.stderr)
-        for resource in dataset['resources']:
-            try:
-                columns = hxl.data(resource['url']).columns
-            except:
-                print("  Skipped {}".format(resource['name']), file=sys.stderr)
-                return
-            for column in columns:
-                increment(count_maps, 'tags', column.tag)
-                increment(count_maps, 'display_tags', column.display_tag)
-                for attribute in column.attributes:
-                    increment(count_maps, 'attributes', attribute)
-            if count_maps.get('total'):
-                count_maps['total'] +=1
-            else:
-                count_maps['total'] = 1
-            print("  Indexed {}".format(resource['name']), file=sys.stderr)
+    for resource in dataset['resources']:
+        try:
+            columns = hxl.data(resource['url']).columns
+        except:
+            print("  Skipped {}".format(resource['name']), file=sys.stderr)
+            return
+        for column in columns:
+            increment(count_maps, 'tags', column.tag)
+            increment(count_maps, 'display_tags', column.display_tag)
+            for attribute in column.attributes:
+                increment(count_maps, 'attributes', attribute)
+        if count_maps.get('total'):
+            count_maps['total'] +=1
+        else:
+            count_maps['total'] = 1
+        print("  Indexed {}".format(resource['name']), file=sys.stderr)
 
 def find_hxl_datasets(start, rows):
     """Return a page of HXL datasets."""
@@ -58,6 +56,7 @@ def is_hxl(url):
     
 def crawl_datasets():
     """Crawl through all datasets tagged 'hxl'"""
+    index = 0
     start = 0
     rows = 25
     result = find_hxl_datasets(start, rows)
@@ -67,7 +66,10 @@ def crawl_datasets():
     print("Found {} datasets.".format(total), file=sys.stderr)
 
     while start < total:
-        process_datasets(result['results'], count_maps)
+        for dataset in result['results']:
+            index += 1
+            print("Dataset {}: {}".format(index, dataset['name']), file=sys.stderr)
+            process_dataset(dataset, count_maps)
         start += rows
         result = find_hxl_datasets(start, rows)
 
