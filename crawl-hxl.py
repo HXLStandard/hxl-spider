@@ -6,10 +6,7 @@ See README.md for more details.
 Started 2016-07-22 by David Megginson
 """
 
-import ckanapi
-import hxl
-
-import pprint
+import ckanapi, hxl, json, sys
 
 # read configuration values from config.py
 import config
@@ -17,13 +14,35 @@ import config
 ckan = ckanapi.RemoteCKAN(config.CONFIG['ckanurl'], apikey=config.CONFIG['apikey'], user_agent=config.CONFIG.get('user_agent', None))
 """The CKAN API object"""
 
-def process_datasets(datasets):
+def process_datasets(datasets, count_maps):
     """Do something with a dataset tagged hxl"""
+
+    def increment(count_maps, type, key):
+        if not count_maps.get(type):
+            count_maps[type] = dict()
+        if count_maps[type].get(key):
+            count_maps[type][key] += 1
+        else:
+            count_maps[type][key] = 1
+            
     for dataset in datasets:
-        print(dataset['name'])
+        print("Dataset: {}".format(dataset['name']), file=sys.stderr)
         for resource in dataset['resources']:
-            if is_hxl(resource['url']):
-                print("  {} ({})".format(resource['name'], resource['format']))
+            try:
+                columns = hxl.data(resource['url']).columns
+            except:
+                print("  Skipped {}".format(resource['name']), file=sys.stderr)
+                return
+            for column in columns:
+                increment(count_maps, 'tags', column.tag)
+                increment(count_maps, 'display_tags', column.display_tag)
+                for attribute in column.attributes:
+                    increment(count_maps, 'attributes', attribute)
+            if count_maps.get('total'):
+                count_maps['total'] +=1
+            else:
+                count_maps['total'] = 1
+            print("  Indexed {}".format(resource['name']), file=sys.stderr)
 
 def find_hxl_datasets(start, rows):
     """Return a page of HXL datasets."""
@@ -40,20 +59,24 @@ def is_hxl(url):
 def crawl_datasets():
     """Crawl through all datasets tagged 'hxl'"""
     start = 0
-    rows = 50
+    rows = 25
     result = find_hxl_datasets(start, rows)
     total = result['count']
+    count_maps = dict()
 
-    print("Found {} datasets.".format(total))
+    print("Found {} datasets.".format(total), file=sys.stderr)
 
     while start < total:
-        process_datasets(result['results'])
+        process_datasets(result['results'], count_maps)
         start += rows
         result = find_hxl_datasets(start, rows)
+
+    return count_maps
 
 #
 # Main loop
 #
-crawl_datasets()
+count_maps = crawl_datasets()
+print(json.dumps(count_maps, indent=4))
 
 # end
