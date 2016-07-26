@@ -6,10 +6,13 @@ See README.md for more details.
 Started 2016-07-22 by David Megginson
 """
 
-import ckanapi, hxl, json, sys
+import ckanapi, hxl, json, sys, time
 
 # read configuration values from config.py
 import config
+
+delay = 10
+"""Time delay between files, to give source APIs a rest."""
 
 ckan = ckanapi.RemoteCKAN(config.CONFIG['ckanurl'], apikey=config.CONFIG['apikey'], user_agent=config.CONFIG.get('user_agent', None))
 """The CKAN API object"""
@@ -41,6 +44,8 @@ def process_dataset(dataset, count_maps):
         else:
             count_maps['total'] = 1
         print("  Indexed {}".format(resource['name']), file=sys.stderr)
+        print("  Waiting {} seconds ...".format(delay))
+        time.sleep(delay)
 
 def find_hxl_datasets(start, rows):
     """Return a page of HXL datasets."""
