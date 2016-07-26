@@ -11,8 +11,8 @@ import ckanapi, hxl, json, sys, time
 # read configuration values from config.py
 import config
 
-delay = 10
-"""Time delay between files, to give source APIs a rest."""
+delay = 5
+"""Time delay in seconds between files, to give source APIs a rest."""
 
 ckan = ckanapi.RemoteCKAN(config.CONFIG['ckanurl'], apikey=config.CONFIG['apikey'], user_agent=config.CONFIG.get('user_agent', None))
 """The CKAN API object"""
