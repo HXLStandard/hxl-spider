@@ -44,7 +44,7 @@ def process_dataset(dataset, count_maps):
         else:
             count_maps['total'] = 1
         print("  Indexed {}".format(resource['name']), file=sys.stderr)
-        print("  Waiting {} seconds ...".format(delay))
+        print("  Waiting {} seconds ...".format(delay), file-sys.stderr)
         time.sleep(delay)
 
 def find_hxl_datasets(start, rows):
