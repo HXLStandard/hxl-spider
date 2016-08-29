@@ -24,7 +24,6 @@ def process_dataset(dataset):
         'type': 'dataset',
         'name': dataset['name'],
         'title': dataset['title'],
-        'owner_org': dataset['owner_org'],
         'source': dataset['dataset_source'],
         'resources': []
     }
